@@ -46,7 +46,7 @@ export default function Home() {
   const [adminPassword, setAdminPassword] = useState("");
   const [adminError, setAdminError] = useState(false);
   const [adminMode, setAdminMode] = useState(false);
-  const [adminSection, setAdminSection] = useState<"bookings" | "customers">("bookings");
+  const [adminSection, setAdminSection] = useState<"calendar" | "bookings" | "customers">("calendar");
   const [closedSlots, setClosedSlots] = useState<Record<string, string[]>>({});
   const [bookedSlots, setBookedSlots] = useState<Record<string, string[]>>({});
   const [adminBookings, setAdminBookings] = useState<Array<{ id: number; booking_time: string; name: string; phone: string; service: string; address: string; completed: boolean }>>([]);
@@ -176,7 +176,7 @@ export default function Home() {
   function loginAdmin(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (adminPassword === "8685") {
-      setAdminMode(true); setAdminLoginOpen(false); setAdminPassword(""); setAdminError(false); setSelectedDate(null);
+      setAdminMode(true); setAdminLoginOpen(false); setAdminPassword(""); setAdminError(false); setSelectedDate(null); setAdminSection("calendar");
     } else setAdminError(true);
   }
 
@@ -322,8 +322,8 @@ export default function Home() {
       </section>
       </>}
 
-      {adminMode && <div className="admin-only-header shell"><strong>관리자 관리</strong><select aria-label="관리자 메뉴 선택" value={adminSection} onChange={e => setAdminSection(e.target.value as "bookings" | "customers")}><option value="bookings">예약 현황</option><option value="customers">고객정보</option></select><button type="button" onClick={() => { setAdminMode(false); setSelectedDate(null); }}>고객 화면으로 돌아가기</button></div>}
-                    {(!adminMode || adminSection === "bookings") && <section className="booking section" id="booking"><div className="shell booking-grid">
+      {adminMode && <div className="admin-only-header shell"><strong>관리자 관리</strong><select aria-label="관리자 메뉴 선택" value={adminSection} onChange={e => setAdminSection(e.target.value as "calendar" | "bookings" | "customers")}><option value="calendar">예약달력</option><option value="bookings">예약 현황</option><option value="customers">고객정보</option></select><button type="button" onClick={() => { setAdminMode(false); setSelectedDate(null); }}>고객 화면으로 돌아가기</button></div>}
+                    {(!adminMode || adminSection === "calendar" || adminSection === "bookings") && <section className="booking section" id="booking"><div className="shell booking-grid">
 
                     <form onSubmit={submit} noValidate className="booking-form">
                         <div className="booking-plan-stack"><p className="booking-frequency-note">한 달 2번이면 충분합니다. 다음 관리 전까지는 물만 뿌리세요.</p>
