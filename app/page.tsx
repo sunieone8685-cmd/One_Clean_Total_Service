@@ -46,9 +46,12 @@ export default function Home() {
   const [adminPassword, setAdminPassword] = useState("");
   const [adminError, setAdminError] = useState(false);
   const [adminMode, setAdminMode] = useState(false);
+  const [adminSection, setAdminSection] = useState<"bookings" | "customers">("bookings");
   const [closedSlots, setClosedSlots] = useState<Record<string, string[]>>({});
   const [bookedSlots, setBookedSlots] = useState<Record<string, string[]>>({});
   const [adminBookings, setAdminBookings] = useState<Array<{ id: number; booking_time: string; name: string; phone: string; service: string; address: string; completed: boolean }>>([]);
+  const [customerHistory, setCustomerHistory] = useState<Array<{ name: string; phone: string; address: string; visit_count: number; service_dates: string[]; note: string }>>([]);
+  const [expandedCustomer, setExpandedCustomer] = useState<string | null>(null);
   const [bookingErrors, setBookingErrors] = useState<Record<string, string>>({});
   const [reviewToken, setReviewToken] = useState<string | null>(null);
   const [canWriteReview, setCanWriteReview] = useState(false);
@@ -125,6 +128,24 @@ export default function Home() {
 
   useEffect(() => { refreshAdminBookings(); }, [selectedDateKey, adminMode]);
 
+  async function refreshCustomerHistory() {
+    if (!adminMode) return;
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_customer_history`, {
+      method: "POST", headers: supabaseHeaders, body: JSON.stringify({ p_password: "8685" }),
+    });
+    if (response.ok) setCustomerHistory(await response.json());
+  }
+
+  async function saveCustomerNote(name: string, address: string, note: string) {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_save_customer_note`, {
+      method: "POST", headers: supabaseHeaders,
+      body: JSON.stringify({ p_name: name, p_address: address, p_note: note, p_password: "8685" }),
+    });
+    if (response.ok) await refreshCustomerHistory();
+  }
+
+  useEffect(() => { refreshCustomerHistory(); }, [adminMode]);
+
   async function completeBooking(id: number) {
     const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_complete_booking`, {
       method: "POST", headers: supabaseHeaders, body: JSON.stringify({ p_booking_id: id, p_password: "8685" }),
@@ -134,6 +155,7 @@ export default function Home() {
       return;
     }
     await refreshAdminBookings();
+    await refreshCustomerHistory();
   }
 
   async function toggleSlot(time: string) {
@@ -300,8 +322,8 @@ export default function Home() {
       </section>
       </>}
 
-      {adminMode && <div className="admin-only-header shell"><strong>관리자 예약 관리</strong><button type="button" onClick={() => { setAdminMode(false); setSelectedDate(null); }}>고객 화면으로 돌아가기</button></div>}
-                    <section className="booking section" id="booking"><div className="shell booking-grid">
+      {adminMode && <div className="admin-only-header shell"><strong>관리자 관리</strong><select aria-label="관리자 메뉴 선택" value={adminSection} onChange={e => setAdminSection(e.target.value as "bookings" | "customers")}><option value="bookings">예약 현황</option><option value="customers">고객정보</option></select><button type="button" onClick={() => { setAdminMode(false); setSelectedDate(null); }}>고객 화면으로 돌아가기</button></div>}
+                    {(!adminMode || adminSection === "bookings") && <section className="booking section" id="booking"><div className="shell booking-grid">
 
                     <form onSubmit={submit} noValidate className="booking-form">
                         <div className="booking-plan-stack"><p className="booking-frequency-note">한 달 2번이면 충분합니다. 다음 관리 전까지는 물만 뿌리세요.</p>
@@ -329,7 +351,9 @@ export default function Home() {
               </>}
             </div>
           </form>
-        </div></section>
+        </div></section>}
+
+      {adminMode && adminSection === "customers" && <section className="admin-customers section"><div className="shell"><div className="admin-customer-head"><div><p className="admin-kicker">CUSTOMER HISTORY</p><h2>누적 고객</h2><p>서비스 완료 처리된 고객별 이용 횟수와 날짜를 관리합니다.</p></div><button type="button" onClick={refreshCustomerHistory}>새로고침</button></div>{customerHistory.length === 0 ? <p className="admin-empty">아직 서비스 완료된 고객 기록이 없습니다.</p> : <div className="admin-customer-list"><div className="admin-customer-row admin-customer-label"><span>고객명</span><span>동·호</span><span>누적 횟수</span><span>비고</span></div>{customerHistory.map(customer => { const key = `${customer.name}|${customer.address}`; const expanded = expandedCustomer === key; return <div className="admin-customer-card" key={key}><div className="admin-customer-row"><strong>{customer.name}<small className="admin-customer-phone">{customer.phone}</small></strong><span>{customer.address}</span><button type="button" className="visit-count" onClick={() => setExpandedCustomer(expanded ? null : key)}>{customer.visit_count}회 <small>{expanded ? "▲" : "▼"}</small></button><div className="admin-note"><input value={customer.note} placeholder="고객 특성·요청사항 메모" onChange={e => setCustomerHistory(list => list.map(item => item === customer ? { ...item, note: e.target.value } : item))} onBlur={e => saveCustomerNote(customer.name, customer.address, e.target.value)} /></div></div>{expanded && <div className="admin-service-dates"><strong>서비스 받은 날짜</strong><span>{customer.service_dates.map(date => new Date(`${date}T00:00:00`).toLocaleDateString("ko-KR")).join(" · ")}</span></div>}</div>; })}</div>}</div></section>}
 
       {!adminMode && <footer><div className="shell footer-grid"><div><div className="business-title"><a className="footer-brand" href="#top"><span className="footer-one">원</span>클린 토탈 서비스</a><span className="business-number">(506-50-00503)</span></div><p>욕실 한 곳에 집중하는<br />부분청소 정기관리 서비스</p></div><div><span>CONTACT</span><a className="phone-link phone-button" href="tel:01041168685"><small className="phone-caption">클릭 연결</small><strong>010-4116-8685</strong></a></div><div><span>AREA</span><b>루원시티·청라 지역</b><button className="secret-admin-trigger" type="button" onClick={() => adminMode ? (setAdminMode(false), setSelectedDate(null)) : setAdminLoginOpen(true)}>[지역 외 서비스 불가]</button></div></div><div className="shell copyright"><span>© 원클린 토탈 서비스. ALL RIGHTS RESERVED.</span></div></footer>}
       {adminLoginOpen && <div className="admin-modal" role="dialog" aria-modal="true" aria-label="관리자 로그인"><form onSubmit={loginAdmin}><button type="button" className="modal-close" onClick={() => { setAdminLoginOpen(false); setAdminError(false); setAdminPassword(""); }}>×</button><strong>관리자 모드</strong><p>비밀번호를 입력해 주세요.</p><input autoFocus type="password" value={adminPassword} onChange={e => { setAdminPassword(e.target.value); setAdminError(false); }} placeholder="비밀번호" />{adminError && <small>비밀번호가 올바르지 않습니다.</small>}<button type="submit">관리자 모드 시작</button></form></div>}
