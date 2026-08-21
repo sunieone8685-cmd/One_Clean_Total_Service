@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, PointerEvent as ReactPointerEvent, TouchEvent, useEffect, useState } from "react";
 
 declare global {
   interface Window {
@@ -46,11 +46,15 @@ export default function Home() {
   const [adminPassword, setAdminPassword] = useState("");
   const [adminError, setAdminError] = useState(false);
   const [adminMode, setAdminMode] = useState(false);
-  const [adminOpenPanel, setAdminOpenPanel] = useState<"calendar" | "customers" | null>(null);
+  const [bookingStatuses, setBookingStatuses] = useState<Record<number, "예약접수" | "통화필요" | "예약확정" | "예약취소">>({});
+  const [adminSection, setAdminSection] = useState<"customers" | "calendar" | "adjust" | null>(null);
+  const [adminCalendarView, setAdminCalendarView] = useState<"month" | "day">("month");
+  const [calendarTouchStart, setCalendarTouchStart] = useState<number | null>(null);
   const [closedSlots, setClosedSlots] = useState<Record<string, string[]>>({});
   const [bookedSlots, setBookedSlots] = useState<Record<string, string[]>>({});
-  const [adminBookings, setAdminBookings] = useState<Array<{ id: number; booking_time: string; name: string; phone: string; service: string; address: string; completed: boolean }>>([]);
+  const [adminBookings, setAdminBookings] = useState<Array<{ id: number; booking_time: string; name: string; phone: string; service: string; address: string; completed: boolean; booking_status: "예약접수" | "통화필요" | "예약확정" | "예약취소" }>>([]);
   const [customerHistory, setCustomerHistory] = useState<Array<{ name: string; phone: string; address: string; visit_count: number; service_dates: string[]; note: string }>>([]);
+  const [expandedCustomers, setExpandedCustomers] = useState<Record<string, boolean>>({});
   const [expandedCustomer, setExpandedCustomer] = useState<string | null>(null);
   const [bookingErrors, setBookingErrors] = useState<Record<string, string>>({});
   const [reviewToken, setReviewToken] = useState<string | null>(null);
@@ -63,6 +67,7 @@ export default function Home() {
   const calendarCells = [...Array(firstWeekday).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
   const years = Array.from({ length: 3 }, (_, i) => today.getFullYear() + i);
   const selectedDateKey = selectedDate ? `${calendarYear}-${String(calendarMonth + 1).padStart(2, "0")}-${String(selectedDate).padStart(2, "0")}` : "";
+  const monthDateKey = (day: number) => `${calendarYear}-${String(calendarMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
   const selectedPlanService = selectedPlan === 2 ? "월 2회 · 욕실 2개" : selectedPlan === 3 ? "월 3회 · 욕실 2개" : selectedPlan === 4 ? "월 4회 · 욕실 2개" : "";
 
   async function refreshSlots() {
@@ -123,7 +128,12 @@ export default function Home() {
     const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_bookings_for_date`, {
       method: "POST", headers: supabaseHeaders, body: JSON.stringify({ p_date: selectedDateKey, p_password: "8685" }),
     });
-    if (response.ok) setAdminBookings(await response.json());
+    if (response.ok) {
+      const rows = await response.json() as Array<{ id: number; booking_time: string; name: string; phone: string; service: string; address: string; completed: boolean; booking_status: "예약접수" | "통화필요" | "예약확정" | "예약취소" }>;
+      const activeRows = rows.filter(row => row.booking_status !== "예약취소");
+      setAdminBookings(activeRows);
+      setBookingStatuses(Object.fromEntries(activeRows.map(row => [row.id, row.booking_status || "예약접수"])));
+    }
   }
 
   useEffect(() => { refreshAdminBookings(); }, [selectedDateKey, adminMode]);
@@ -173,10 +183,57 @@ export default function Home() {
     await refreshSlots();
   }
 
+  async function setBookingStatus(id: number, status: "예약접수" | "통화필요" | "예약확정" | "예약취소") {
+    setBookingStatuses(current => ({ ...current, [id]: status }));
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_set_booking_status_wonseonhee`, {
+      method: "POST",
+      headers: supabaseHeaders,
+      body: JSON.stringify({ p_booking_id: id, p_status: status, p_password: "8685" }),
+    });
+    if (!response.ok || !(await response.json())) {
+      window.alert("예약 상태 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+      await refreshAdminBookings();
+      return;
+    }
+    if (status === "예약취소") {
+      setAdminBookings(current => current.filter(booking => booking.id !== id));
+      await refreshSlots();
+    }
+  }
+
+  function showSelectedDateDetails() {
+    if (selectedDate) setAdminCalendarView("day");
+  }
+
+  function handleCalendarTouchStart(event: TouchEvent<HTMLDivElement>) {
+    setCalendarTouchStart(event.touches[0]?.clientY ?? null);
+  }
+
+  function handleCalendarTouchEnd(event: TouchEvent<HTMLDivElement>) {
+    if (calendarTouchStart === null) return;
+    const endY = event.changedTouches[0]?.clientY ?? calendarTouchStart;
+    const delta = calendarTouchStart - endY;
+    if (delta > 35) showSelectedDateDetails();
+    if (delta < -35) setAdminCalendarView("month");
+    setCalendarTouchStart(null);
+  }
+
+  function handleCalendarPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    setCalendarTouchStart(event.clientY);
+  }
+
+  function handleCalendarPointerUp(event: ReactPointerEvent<HTMLDivElement>) {
+    if (calendarTouchStart === null) return;
+    const delta = calendarTouchStart - event.clientY;
+    if (delta > 35) showSelectedDateDetails();
+    if (delta < -35) setAdminCalendarView("month");
+    setCalendarTouchStart(null);
+  }
+
   function loginAdmin(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (adminPassword === "8685") {
-      setAdminMode(true); setAdminLoginOpen(false); setAdminPassword(""); setAdminError(false); setSelectedDate(null); setAdminOpenPanel(null);
+      setAdminMode(true); setAdminLoginOpen(false); setAdminPassword(""); setAdminError(false); setSelectedDate(null); setAdminSection(null);
     } else setAdminError(true);
   }
 
@@ -272,7 +329,7 @@ export default function Home() {
   }
 
   return (
-    <main>
+    <main className={adminMode ? "admin-active" : ""}>
       {!adminMode && <>
       <header className="top-brand shell">
         <a href="#top" aria-label="홈으로"><span className="brand-one">One</span><span> Clean Total Service</span></a>
@@ -322,10 +379,10 @@ export default function Home() {
       </section>
       </>}
 
-      {adminMode && <div className="admin-only-header shell"><strong>관리자 관리</strong><nav className="admin-menu" aria-label="관리자 메뉴"><button type="button" className={adminOpenPanel === "calendar" ? "active" : ""} onClick={() => setAdminOpenPanel(adminOpenPanel === "calendar" ? null : "calendar")}>예약달력 <span>{adminOpenPanel === "calendar" ? "▲" : "▼"}</span></button><button type="button" className={adminOpenPanel === "customers" ? "active" : ""} onClick={() => setAdminOpenPanel(adminOpenPanel === "customers" ? null : "customers")}>고객정보 <span>{adminOpenPanel === "customers" ? "▲" : "▼"}</span></button></nav><button type="button" onClick={() => { setAdminMode(false); setSelectedDate(null); setAdminOpenPanel(null); }}>고객 화면으로 돌아가기</button></div>}
-                    {(!adminMode || adminOpenPanel === "calendar") && <section className="booking section" id="booking"><div className="shell booking-grid">
+      {adminMode && <div className="admin-only-header shell"><strong>관리자 관리</strong><nav className="admin-menu" aria-label="관리자 메뉴"><button type="button" className={adminSection === "calendar" ? "active" : ""} onClick={() => setAdminSection(adminSection === "calendar" ? null : "calendar")}>예약달력 <span>{adminSection === "calendar" ? "▲" : "▼"}</span></button><button type="button" className={adminSection === "customers" ? "active" : ""} onClick={() => setAdminSection(adminSection === "customers" ? null : "customers")}>고객정보 <span>{adminSection === "customers" ? "▲" : "▼"}</span></button></nav><button type="button" onClick={() => { setAdminMode(false); setSelectedDate(null); setAdminSection(null); }}>고객 화면으로 돌아가기</button></div>}
+                    {<section className="booking section" id="booking"><div className="shell booking-grid">
 
-                    <form onSubmit={submit} noValidate className="booking-form">
+                    <form onSubmit={submit} noValidate className={`booking-form${adminMode ? " admin-mode" : ""}`}>
                         <div className="booking-plan-stack"><p className="booking-frequency-note">한 달 2번이면 충분합니다. 다음 관리 전까지는 물만 뿌리세요.</p>
             <div className="price-group monthly-plan booking-plan selected" aria-label="딥케어 욕실 2개 월 2회 99,000원"><span className="price-label">딥케어 욕실(2개)</span><span className="monthly-freq">월2회</span><b className="monthly-price">99,000원</b></div></div><div className="booking-intro-group"><h2 className="booking-intro">첫 방문일을 선택해 주세요.</h2><p>첫 방문일을 선택한 뒤, 다음 일정은 생활
 패턴에 맞춰 조율합니다.</p></div>
@@ -334,7 +391,148 @@ export default function Home() {
             <div className="calendar-days">{calendarCells.map((day, i) => day ? <button type="button" key={i} className={`${selectedDate === day ? "selected " : ""}fully-booked`} aria-label={`${day}일 예약 마감`} onClick={() => { setSelectedDate(day); setSelectedTimeValue(""); setSent(false); }}><span>{day}</span></button> : <i key={i} />)}</div>
             <div className="selected-booking always-visible">
               {selectedDate && <><button type="button" className="calendar-back" onClick={() => { setSelectedDate(null); setSelectedTimeValue(""); setSent(false); }}>← 날짜 다시 선택</button><div className="price-group monthly-plan booking-plan selected selected-date-card" aria-label={`선택한 날짜 ${calendarYear}년 ${calendarMonth + 1}월 ${selectedDate}일`}><span className="price-label">선택한 날짜</span><span className="monthly-freq">방문일</span><b className="monthly-price">{calendarYear}년 {calendarMonth + 1}월 {selectedDate}일</b></div></>}
-              {adminMode ? <div className="admin-slot-control"><h3>예약 시간 관리</h3><p>버튼을 눌러 예약 가능 여부를 변경하세요.</p>{[["11:00","오전 11시"],["13:00","오후 1시"],["15:00","오후 3시"]].map(([time,label]) => { const booked = (bookedSlots[selectedDateKey] ?? []).includes(time); const closed = (closedSlots[selectedDateKey] ?? []).includes(time); const booking = adminBookings.find(item => item.booking_time.slice(0, 5) === time); return <div className="admin-time-row" key={time}><button type="button" disabled={booked} className={booked || closed ? "closed" : "open"} onClick={() => toggleSlot(time)}><span>{label}</span><b>{booked || closed ? "예약 마감" : "예약 가능"}</b></button>{booking && <div className="admin-booking-info"><span><b>{booking.name}</b> · {booking.phone}<small>{booking.service}</small><small>{booking.address}</small></span><button type="button" disabled={booking.completed} onClick={() => completeBooking(booking.id)}>{booking.completed ? "서비스 완료 ✓" : "서비스 완료"}</button></div>}</div>; })}</div> : <>
+              {adminMode ? <>
+                <div className={`admin-container${adminSection === "calendar" ? " calendar-open" : ""}`}>
+                  <button type="button" className="admin-exit-button" onClick={() => { setAdminMode(false); setAdminSection(null); setSelectedDate(null); setSelectedTimeValue(""); }}>고객 화면으로 가기</button>
+                  <div className={`admin-section-card${adminSection === "customers" ? " expanded" : ""}`}>
+
+                    <button type="button" className="admin-section-trigger" onClick={() => setAdminSection(current => current === "customers" ? null : "customers")}>
+                      <strong>회원정보</strong>
+                      <span>{adminSection === "customers" ? "▲" : "▼"}</span>
+                    </button>
+                    {adminSection === "customers" && (
+                      <div className="admin-section-content">
+                        <p className="admin-section-desc">서비스 완료 기준 누적 이용 내역입니다.</p>
+                        {customerHistory.length === 0 ? (
+                          <div className="admin-empty">아직 완료된 서비스가 없습니다.</div>
+                        ) : (
+                          customerHistory.map(customer => {
+                            const key = `${customer.name}-${customer.phone}`;
+                            const open = Boolean(expandedCustomers[key]);
+                            return (
+                              <div className="admin-customer-history-card" key={key}>
+                                <div className="admin-customer-history-head">
+                                  <span><b>{customer.name}</b><small>{customer.phone}</small><small>{customer.address}</small></span>
+                                  <button type="button" onClick={() => setExpandedCustomers(current => ({ ...current, [key]: !open }))}>
+                                    누적 {customer.visit_count}회 <em>{open ? "▲" : "▼"}</em>
+                                  </button>
+                                </div>
+                                {open && (
+                                  <div className="admin-service-dates">
+                                    <strong>서비스 받은 날짜</strong>
+                                    {customer.service_dates.map(date => <span key={date}>{date}</span>)}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className={`admin-section-card${adminSection === "calendar" ? " expanded" : ""}`}>
+                    <div className="admin-calendar-menu-row">
+                      <button type="button" className="admin-section-trigger" onClick={() => { if (adminSection === "calendar") { setAdminSection(null); return; } setCalendarYear(today.getFullYear()); setCalendarMonth(today.getMonth()); setSelectedDate(today.getDate()); setAdminCalendarView("month"); setAdminSection("calendar"); }}>
+                        <strong>캘린더</strong>
+                        <span>{adminSection === "calendar" ? "▲" : "▼"}</span>
+                      </button>
+                      <div className="admin-calendar-menu-selects"><select aria-label="연도 선택" value={calendarYear} onChange={e => { setCalendarYear(Number(e.target.value)); setSelectedDate(null); }}>{years.map(y => <option key={y} value={y}>{y}년</option>)}</select><select aria-label="월 선택" value={calendarMonth} onChange={e => { setCalendarMonth(Number(e.target.value)); setSelectedDate(null); }}>{Array.from({ length: 12 }, (_, i) => <option key={i} value={i}>{i + 1}월</option>)}</select></div>
+                    </div>
+                    {adminSection === "calendar" && (
+                      <div className="admin-section-content admin-new-calendar">
+                        <div className="admin-calendar-panel">
+                          <div className="calendar-week">{["일","월","화","수","목","금","토"].map(d => <span key={d}>{d}</span>)}</div>
+                          <div className="calendar-days">{calendarCells.map((day, i) => day ? <button type="button" key={i} className={`${selectedDate === day ? "selected " : ""}${(bookedSlots[monthDateKey(day)] ?? []).length ? "has-booking" : ""}`} onClick={() => { setSelectedDate(day); setSelectedTimeValue(""); }}><span>{day}</span>{(bookedSlots[monthDateKey(day)] ?? []).map(time => <small key={time}>{time}</small>)}</button> : <i key={i} />)}</div>
+                        </div>
+                        <div className={`admin-day-view${adminCalendarView === "day" ? " visible" : ""}`}>
+                          <button type="button" className="admin-month-return" onClick={() => setAdminCalendarView("month")}>‹ 캘린더로 돌아가기</button>
+                          <div className="admin-day-heading">예약 상세</div>
+                          {selectedDate && adminBookings.length === 0 ? <div className="admin-empty">아직 예약이 없습니다.</div> : selectedDate && adminBookings.map(booking => { const status = bookingStatuses[booking.id] ?? booking.booking_status ?? "예약접수"; return <article className="admin-day-booking-card" key={booking.id}><div className="admin-day-booking-info"><strong>{booking.name}</strong><span>{booking.phone}</span><span>{(booking.address || "주소 미입력").replace(/^영종자이아파트\s*/, "")}</span><span>{booking.booking_time.slice(0, 5)}</span></div><div className="admin-status-buttons">{(["예약접수", "통화필요", "예약확정", "예약취소"] as const).map(item => <button type="button" className={status === item ? "selected" : ""} key={item} onClick={async () => { if (item === "예약취소" && !window.confirm("정말 이 고객의 예약을 취소하시겠습니까?")) return; await setBookingStatus(booking.id, item); if (item === "통화필요") window.open(`tel:${booking.phone.replace(/\D/g, "")}`, "_blank"); }}>{item === "통화필요" ? "통화" : item}</button>)}</div></article>; })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className={`admin-section-card admin-adjust-card${adminSection === "adjust" ? " expanded" : ""}`}>
+                    <button type="button" className="admin-section-trigger" onClick={() => { if (adminSection === "adjust") { setAdminSection(null); return; } setCalendarYear(today.getFullYear()); setCalendarMonth(today.getMonth()); setSelectedDate(today.getDate()); setSelectedTimeValue(""); setAdminCalendarView("month"); setAdminSection("adjust"); }}>
+                      <strong>예약조정</strong>
+                      <span>{adminSection === "adjust" ? "▲" : "▼"}</span>
+                    </button>
+                    {adminSection === "adjust" && (
+                      <div className="admin-section-content" onTouchStart={handleCalendarTouchStart} onTouchEnd={handleCalendarTouchEnd} onPointerDown={handleCalendarPointerDown} onPointerUp={handleCalendarPointerUp}>
+                        <div className={`admin-calendar-panel${adminCalendarView === "day" ? " admin-day-hidden" : ""}`}>
+                          <div className="calendar-head">
+                            <strong>날짜 선택</strong>
+                            <div>
+                              <select aria-label="연도 선택" value={calendarYear} onChange={e => { setCalendarYear(Number(e.target.value)); setSelectedDate(null); }}>
+                                {years.map(y => <option key={y} value={y}>{y}년</option>)}
+                              </select>
+                              <select aria-label="월 선택" value={calendarMonth} onChange={e => { setCalendarMonth(Number(e.target.value)); setSelectedDate(null); }}>
+                                {Array.from({ length: 12 }, (_, i) => <option key={i} value={i}>{i + 1}월</option>)}
+                              </select>
+                            </div>
+                          </div>
+                          <div className="calendar-week">{["일","월","화","수","목","금","토"].map(d => <span key={d}>{d}</span>)}</div>
+                          <div className="calendar-days">
+                            {calendarCells.map((day, i) => day ? (
+                              <button type="button" key={i} className={selectedDate === day ? "selected" : ""} aria-label={`${day}일 선택`} onClick={() => { setSelectedDate(day); setSelectedTimeValue(""); }}>{day}</button>
+                            ) : <i key={i} />)}
+                          </div>
+                          {selectedDate && <div className="admin-selected-date">선택 날짜: <b>{calendarYear}년 {calendarMonth + 1}월 {selectedDate}일</b></div>}
+                          <div className="admin-slot-control">
+                            <h3>예약 시간 관리</h3>
+                            <p className="admin-section-desc">시간 버튼을 눌러 예약을 마감하거나 다시 열 수 있습니다.</p>
+                            {[["09:00","오전 9시"],["15:00","오후 3시"],["17:00","오후 5시"]].map(([time,label]) => {
+                              const booked = (bookedSlots[selectedDateKey] ?? []).includes(time);
+                              const closed = (closedSlots[selectedDateKey] ?? []).includes(time);
+                              const booking = adminBookings.find(item => item.booking_time.slice(0, 5) === time);
+                              return (
+                                <div className="admin-time-row" key={time}>
+                                  <button type="button" disabled={booked} className={booked || closed ? "closed" : "open"} onClick={() => toggleSlot(time)}>
+                                    <span>{label}</span>
+                                    <b>{booked || closed ? "예약 마감" : "예약 가능"}</b>
+                                  </button>
+                                  {booking && (
+                                    <div className="admin-booking-info">
+                                      <span><b>{booking.name}</b> · {booking.phone}<small>{booking.service}</small><small>{booking.address}</small></span>
+                                      <button type="button" disabled={booking.completed} onClick={() => completeBooking(booking.id)}>
+                                        {booking.completed ? "서비스 완료 ✓" : "서비스 완료"}
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        <div className={`admin-day-view${adminCalendarView === "day" ? " visible" : ""}`}>
+                          <button type="button" className="admin-month-return" onClick={() => setAdminCalendarView("month")}>‹ 캘린더로 돌아가기</button>
+                          <div className="admin-day-heading">{selectedDate ? `${calendarMonth + 1}월 ${selectedDate}일 예약` : "날짜를 선택해 주세요"}</div>
+                          {!selectedDate ? (
+                            <p className="admin-section-desc">캘린더에서 날짜를 선택한 뒤 위로 밀어 올리면 당일 상세내역이 나옵니다.</p>
+                          ) : adminBookings.length === 0 ? (
+                            <div className="admin-empty">아직 예약이 없습니다.</div>
+                          ) : adminBookings.map(booking => {
+                            const status = bookingStatuses[booking.id] ?? booking.booking_status ?? "예약접수";
+                            return <article className="admin-day-booking-card" key={booking.id}>
+                              <div className="admin-day-booking-info">
+                                <strong>{booking.name}</strong>
+                                <span>{booking.phone}</span>
+                                <span>{(booking.address || "주소 미입력").replace(/^영종자이아파트\s*/, "")}</span>
+                                <span>{booking.booking_time.slice(0, 5)}</span>
+                              </div>
+                              <div className="admin-status-buttons" aria-label={`${booking.name} 예약 상태`}>
+                                {(["예약접수", "통화필요", "예약확정", "예약취소"] as const).map(item => <button type="button" className={status === item ? "selected" : ""} key={item} onClick={async () => { if (item === "예약취소" && !window.confirm("정말 이 고객의 예약을 취소하시겠습니까?")) return; await setBookingStatus(booking.id, item); if (item === "통화필요") window.open(`tel:${booking.phone.replace(/\D/g, "")}`, "_blank"); }}>{item === "통화필요" ? "통화" : item}</button>)}
+                              </div>
+                            </article>;
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </> : <>
                 {selectedDate && <fieldset className="time-select"><legend><small>TIME SELECT</small><strong>{calendarMonth + 1}월 {selectedDate}일 ({new Date(calendarYear, calendarMonth, selectedDate).toLocaleDateString("ko-KR", { weekday: "short" })})에 방문 가능한 시간</strong></legend><label><input checked={selectedTimeValue === "11:00"} disabled={(closedSlots[selectedDateKey] ?? []).includes("11:00") || (bookedSlots[selectedDateKey] ?? []).includes("11:00")} type="radio" name="booking-time" value="11:00" onChange={() => { setSelectedTimeValue("11:00"); setBookingErrors(current => ({ ...current, datetime: "" })); }} /><span>◷ {(bookedSlots[selectedDateKey] ?? []).includes("11:00") || (closedSlots[selectedDateKey] ?? []).includes("11:00") ? "오전 11시 · 예약 마감" : "오전 11시"}</span><span className="time-select-action">{selectedTimeValue === "11:00" ? "선택됨" : "선택"}</span></label><label><input checked={selectedTimeValue === "13:00"} disabled={(closedSlots[selectedDateKey] ?? []).includes("13:00") || (bookedSlots[selectedDateKey] ?? []).includes("13:00")} type="radio" name="booking-time" value="13:00" onChange={() => { setSelectedTimeValue("13:00"); setBookingErrors(current => ({ ...current, datetime: "" })); }} /><span>◷ {(bookedSlots[selectedDateKey] ?? []).includes("13:00") || (closedSlots[selectedDateKey] ?? []).includes("13:00") ? "오후 1시 · 예약 마감" : "오후 1시"}</span><span className="time-select-action">{selectedTimeValue === "13:00" ? "선택됨" : "선택"}</span></label><label><input checked={selectedTimeValue === "15:00"} disabled={(closedSlots[selectedDateKey] ?? []).includes("15:00") || (bookedSlots[selectedDateKey] ?? []).includes("15:00")} type="radio" name="booking-time" value="15:00" onChange={() => { setSelectedTimeValue("15:00"); setBookingErrors(current => ({ ...current, datetime: "" })); }} /><span>◷ {(bookedSlots[selectedDateKey] ?? []).includes("15:00") || (closedSlots[selectedDateKey] ?? []).includes("15:00") ? "오후 3시 · 예약 마감" : "오후 3시"}</span><span className="time-select-action">{selectedTimeValue === "15:00" ? "선택됨" : "선택"}</span></label>{bookingErrors.datetime && <small className="field-error">{bookingErrors.datetime}</small>}</fieldset>}
                 {selectedPlan && selectedDate && selectedTimeValue && <div className="contact-step"><div className="contact-step-head"><small>STEP 3 · CONTACT</small><h3>연락 가능한 정보를 알려 주세요.</h3></div><input type="hidden" name="booking-service" value={selectedPlanService} /><div className="form-row"><label>이름<input name="booking-name" placeholder="성함을 입력해 주세요" onChange={() => setBookingErrors(current => ({ ...current, name: "" }))} />{bookingErrors.name && <small className="field-error">{bookingErrors.name}</small>}</label><label>연락처<input name="booking-phone" inputMode="tel" maxLength={19} placeholder="010 - 0000 - 0000" onChange={event => { const digits = event.currentTarget.value.replace(/\D/g, "").slice(0, 11); event.currentTarget.value = digits.length <= 3 ? digits : digits.length <= 7 ? `${digits.slice(0, 3)} - ${digits.slice(3)}` : `${digits.slice(0, 3)} - ${digits.slice(3, 7)} - ${digits.slice(7)}`; setBookingErrors(current => ({ ...current, phone: "" })); }} />{bookingErrors.phone && <small className="field-error">{bookingErrors.phone}</small>}</label></div>
                 <div className="address-field">
@@ -353,7 +551,7 @@ export default function Home() {
           </form>
         </div></section>}
 
-      {adminMode && adminOpenPanel === "customers" && <section className="admin-customers section"><div className="shell"><div className="admin-customer-head"><div><p className="admin-kicker">CUSTOMER HISTORY</p><h2>누적 고객</h2><p>서비스 완료 처리된 고객별 이용 횟수와 날짜를 관리합니다.</p></div><button type="button" onClick={refreshCustomerHistory}>새로고침</button></div>{customerHistory.length === 0 ? <p className="admin-empty">아직 서비스 완료된 고객 기록이 없습니다.</p> : <div className="admin-customer-list"><div className="admin-customer-row admin-customer-label"><span>고객명</span><span>동·호</span><span>누적 횟수</span><span>비고</span></div>{customerHistory.map(customer => { const key = `${customer.name}|${customer.address}`; const expanded = expandedCustomer === key; return <div className="admin-customer-card" key={key}><div className="admin-customer-row"><strong>{customer.name}<small className="admin-customer-phone">{customer.phone}</small></strong><span>{customer.address}</span><button type="button" className="visit-count" onClick={() => setExpandedCustomer(expanded ? null : key)}>{customer.visit_count}회 <small>{expanded ? "▲" : "▼"}</small></button><div className="admin-note"><input value={customer.note} placeholder="고객 특성·요청사항 메모" onChange={e => setCustomerHistory(list => list.map(item => item === customer ? { ...item, note: e.target.value } : item))} onBlur={e => saveCustomerNote(customer.name, customer.address, e.target.value)} /></div></div>{expanded && <div className="admin-service-dates"><strong>서비스 받은 날짜</strong><span>{customer.service_dates.map(date => new Date(`${date}T00:00:00`).toLocaleDateString("ko-KR")).join(" · ")}</span></div>}</div>; })}</div>}</div></section>}
+      {adminMode && adminSection === "customers" && <section className="admin-customers section"><div className="shell"><div className="admin-customer-head"><div><p className="admin-kicker">CUSTOMER HISTORY</p><h2>누적 고객</h2><p>서비스 완료 처리된 고객별 이용 횟수와 날짜를 관리합니다.</p></div><button type="button" onClick={refreshCustomerHistory}>새로고침</button></div>{customerHistory.length === 0 ? <p className="admin-empty">아직 서비스 완료된 고객 기록이 없습니다.</p> : <div className="admin-customer-list"><div className="admin-customer-row admin-customer-label"><span>고객명</span><span>동·호</span><span>누적 횟수</span><span>비고</span></div>{customerHistory.map(customer => { const key = `${customer.name}|${customer.address}`; const expanded = expandedCustomer === key; return <div className="admin-customer-card" key={key}><div className="admin-customer-row"><strong>{customer.name}<small className="admin-customer-phone">{customer.phone}</small></strong><span>{customer.address}</span><button type="button" className="visit-count" onClick={() => setExpandedCustomer(expanded ? null : key)}>{customer.visit_count}회 <small>{expanded ? "▲" : "▼"}</small></button><div className="admin-note"><input value={customer.note} placeholder="고객 특성·요청사항 메모" onChange={e => setCustomerHistory(list => list.map(item => item === customer ? { ...item, note: e.target.value } : item))} onBlur={e => saveCustomerNote(customer.name, customer.address, e.target.value)} /></div></div>{expanded && <div className="admin-service-dates"><strong>서비스 받은 날짜</strong><span>{customer.service_dates.map(date => new Date(`${date}T00:00:00`).toLocaleDateString("ko-KR")).join(" · ")}</span></div>}</div>; })}</div>}</div></section>}
 
       {!adminMode && <footer><div className="shell footer-grid"><div><div className="business-title"><a className="footer-brand" href="#top"><span className="footer-one">원</span>클린 토탈 서비스</a><span className="business-number">(506-50-00503)</span></div><p>욕실 한 곳에 집중하는<br />부분청소 정기관리 서비스</p></div><div><span>CONTACT</span><a className="phone-link phone-button" href="tel:01041168685"><small className="phone-caption">클릭 연결</small><strong>010-4116-8685</strong></a></div><div><span>AREA</span><b>루원시티·청라 지역</b><button className="secret-admin-trigger" type="button" onClick={() => adminMode ? (setAdminMode(false), setSelectedDate(null)) : setAdminLoginOpen(true)}>[지역 외 서비스 불가]</button></div></div><div className="shell copyright"><span>© 원클린 토탈 서비스. ALL RIGHTS RESERVED.</span></div></footer>}
       {adminLoginOpen && <div className="admin-modal" role="dialog" aria-modal="true" aria-label="관리자 로그인"><form onSubmit={loginAdmin}><button type="button" className="modal-close" onClick={() => { setAdminLoginOpen(false); setAdminError(false); setAdminPassword(""); }}>×</button><strong>관리자 모드</strong><p>비밀번호를 입력해 주세요.</p><input autoFocus type="password" value={adminPassword} onChange={e => { setAdminPassword(e.target.value); setAdminError(false); }} placeholder="비밀번호" />{adminError && <small>비밀번호가 올바르지 않습니다.</small>}<button type="submit">관리자 모드 시작</button></form></div>}

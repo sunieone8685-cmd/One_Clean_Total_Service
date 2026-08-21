@@ -377,3 +377,189 @@
 
 /* 관리자 메뉴는 향후 항목 추가를 고려해 세로로 배치 */
 .admin-menu{display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:190px}.admin-menu button{display:flex;align-items:center;justify-content:space-between;width:100%;border:1px solid rgba(52,72,61,.2);border-radius:6px;background:#fff;color:var(--deep);padding:10px 12px;font-weight:800;cursor:pointer;text-align:left}.admin-menu button span{font-size:10px;color:#d56f4f}.admin-menu button.active{border-color:#d56f4f;background:#fff8f4;color:#d56f4f}@media(max-width:760px){.admin-menu{width:100%;min-width:0}.admin-only-header>button:last-child{width:100%}}
+
+
+/* 관리자 모드: 고객용 예약 안내는 숨기고 관리자 메뉴만 표시 */
+.booking-form.admin-mode>.booking-plan-stack,.booking-form.admin-mode>.booking-intro-group,.booking-form.admin-mode>.calendar-head,.booking-form.admin-mode>.calendar-week,.booking-form.admin-mode>.calendar-days{display:none!important}.booking-form.admin-mode .selected-booking{border-top:0;padding-top:0}.admin-calendar-panel{margin-top:8px}.admin-calendar-panel .calendar-days button span{width:36px;height:36px;font-size:12px}.admin-calendar-panel .calendar-days button.selected{background:var(--deep);color:#fff;border-radius:50%}.admin-calendar-panel .calendar-days button{border:0;background:transparent;cursor:pointer}.admin-selected-date{margin:0 0 18px;padding:12px 14px;background:var(--beige);font-size:13px;color:var(--deep)}
+
+/* 관리자 모드에서는 고객용 홈페이지 콘텐츠를 숨기고 관리자 패널만 표시 */
+.admin-active>.top-brand,.admin-active>.hero-redesign,.admin-active>.about,.admin-active>.service,.admin-active>footer{display:none!important}.admin-active>.booking{min-height:100vh;padding-top:24px}.admin-active .booking-form{max-width:720px;margin:0 auto}.admin-active .selected-booking{margin-top:0}
+
+/* Kitchen & Bath 관리자 화면: One Clean과 동일한 모바일 전체폭 카드형 레이아웃 */
+.admin-active{background:var(--sage)!important;min-height:100dvh}
+.admin-active>.booking{min-height:100dvh!important;padding:24px 0 48px!important;background:var(--sage)!important}
+.admin-active .booking-grid{display:block!important;width:100%!important}
+.admin-active .booking-copy{display:none!important}
+.admin-active .booking-form{width:min(100% - 32px,720px)!important;max-width:none!important;margin:0 auto!important;background:var(--warm)!important;padding:18px!important;border-radius:0!important;box-shadow:none!important}
+.admin-active .selected-booking{width:100%!important;padding:0!important;margin:0!important;background:transparent!important}
+.admin-active .admin-container{display:flex!important;flex-direction:column!important;gap:14px!important;width:100%!important;margin:0!important}
+.admin-active .admin-section-card{width:100%!important;background:#fff!important;border:1px solid rgba(52,72,61,.18)!important;border-radius:14px!important;overflow:hidden!important;box-shadow:0 5px 16px rgba(37,39,37,.06)!important}
+.admin-active .admin-section-card.expanded{border-color:var(--deep)!important}
+.admin-active .admin-section-trigger{width:100%!important;min-height:76px!important;padding:20px 22px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;border:0!important;background:#fff!important;color:var(--deep)!important;font-size:21px!important;font-weight:800!important;text-align:left!important;cursor:pointer!important}
+.admin-active .admin-section-card.expanded .admin-section-trigger{background:var(--beige)!important}
+.admin-active .admin-section-trigger span{font-size:18px!important;color:var(--sage)!important}
+.admin-active .admin-section-content{padding:0 20px 22px!important;background:#fff!important}
+.admin-active .admin-section-desc{margin:0 0 16px!important;color:#747a73!important;font-size:13px!important;line-height:1.6!important}
+.admin-active .admin-customer-history-card{border:1px solid var(--line)!important;border-radius:10px!important;margin:0 0 10px!important;overflow:hidden!important}
+.admin-active .admin-customer-history-head{padding:16px!important}
+.admin-active .admin-calendar-panel{margin:0!important}
+.admin-active .calendar-head{display:flex!important;justify-content:space-between!important;align-items:center!important;margin:0 0 16px!important}
+.admin-active .calendar-head strong{font-size:17px!important;color:var(--deep)!important}
+.admin-active .calendar-days button span,.admin-active .calendar-days button{width:40px!important;height:40px!important}
+.admin-active .admin-slot-control{margin-top:20px!important}
+.admin-active .admin-slot-control h3{margin:0 0 6px!important;font-size:18px!important;color:var(--deep)!important}
+@media(max-width:760px){.admin-active .booking-form{width:calc(100% - 24px)!important;padding:14px!important}.admin-active .admin-section-trigger{min-height:72px!important;font-size:20px!important}.admin-active .admin-section-content{padding:0 14px 18px!important}.admin-active .calendar-days button span,.admin-active .calendar-days button{width:36px!important;height:36px!important}.admin-active .admin-customer-history-head{gap:8px!important;padding:14px 12px!important}.admin-active .admin-customer-history-head>button{font-size:12px!important}}
+
+/* 새 관리자 캘린더: 월간 화면에서 위로 밀어 당일 상세로 전환 */
+.admin-new-calendar{touch-action:pan-y!important}
+.admin-day-hidden{display:none!important}
+.admin-day-view{display:none!important}
+.admin-day-view.visible{display:block!important}
+.admin-calendar-hint{margin:18px 0 0!important;color:#7a8179!important;font-size:12px!important;text-align:center!important}
+.admin-month-return{border:0;background:transparent;color:var(--deep);font-size:13px;font-weight:800;padding:4px 0 16px;cursor:pointer}
+.admin-day-heading{font-family:Georgia,"Noto Serif KR",serif;color:var(--deep);font-size:23px;margin:0 0 18px}
+.admin-day-booking-card{border-left:4px solid #70a9cf;background:#fff;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:4px;padding:16px 14px;margin:0 0 12px;box-shadow:0 3px 10px rgba(37,39,37,.05)}
+.admin-day-booking-info{display:grid;gap:5px;margin-bottom:14px;color:#606860;font-size:13px}
+.admin-day-booking-info strong{color:var(--deep);font-size:19px}
+.admin-day-booking-info span:last-child{color:var(--deep);font-weight:800;font-size:16px}
+.admin-status-buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.admin-status-buttons button{border:1px solid var(--line);border-radius:5px;background:#fff;color:#6e756e;padding:10px 4px;font-size:11px;font-weight:800;cursor:pointer}
+.admin-status-buttons button.selected{background:var(--deep);border-color:var(--deep);color:#fff}
+@media(max-width:760px){.admin-day-booking-card{padding:15px 12px}.admin-status-buttons button{font-size:10px;padding:10px 2px}}
+
+.admin-new-calendar .calendar-days button{position:relative!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:3px!important;min-height:58px!important;padding:2px 1px 4px!important}
+.admin-new-calendar .calendar-days button.has-booking:after{display:none!important}
+.admin-new-calendar .calendar-days button small{position:static!important;display:block!important;width:100%!important;padding:3px 2px!important;border:1px solid #70a9cf!important;border-radius:3px!important;color:#3e83b5!important;background:#fff!important;font-size:9px!important;font-weight:800!important;line-height:1.1!important}
+
+/* 캘린더 진입 시 월간 달력 아래에 오늘 상세를 기본 표시 */
+.admin-new-calendar .admin-day-view{display:block!important}
+.admin-new-calendar .admin-month-return{display:none!important}
+.admin-new-calendar .admin-calendar-hint{margin-bottom:18px!important}
+
+.admin-day-booking-info{display:flex!important;align-items:center!important;gap:8px!important;white-space:nowrap!important;overflow-x:auto!important;margin-bottom:14px!important}
+.admin-day-booking-info strong{flex:0 0 auto!important}
+.admin-day-booking-info span{flex:0 0 auto!important}
+.admin-day-booking-info span:not(:last-child)::after{content:" ·";color:#a7aea7;margin-left:8px}
+
+.admin-day-booking-info span:nth-child(2),.admin-day-booking-info span:nth-child(3){font-weight:800!important;color:var(--deep)!important}
+
+.admin-new-calendar .calendar-days{align-items:stretch!important}
+.admin-new-calendar .calendar-days button{min-height:92px!important;width:100%!important;overflow:visible!important;padding:4px 2px 6px!important}
+.admin-new-calendar .calendar-days button>span{font-size:15px!important;line-height:1.25!important;margin-bottom:3px!important}
+.admin-new-calendar .calendar-days button small{min-height:28px!important;padding:6px 2px!important;font-size:12px!important;line-height:1.2!important;white-space:nowrap!important}
+
+.admin-new-calendar .calendar-days{grid-template-columns:repeat(7,minmax(0,1fr))!important;width:100%!important;overflow:hidden!important}
+.admin-new-calendar .calendar-days button>span{font-size:inherit!important;font-weight:inherit!important}
+.admin-new-calendar .calendar-days button{min-width:0!important;min-height:78px!important}
+.admin-new-calendar .calendar-days button small{font-size:10px!important;min-height:24px!important;padding:5px 1px!important;overflow:hidden!important}
+
+.admin-new-calendar .calendar-days{column-gap:2px!important;row-gap:8px!important}
+.admin-new-calendar .calendar-days button small{box-sizing:border-box!important;width:100%!important;min-height:30px!important;padding:7px 1px!important;font-size:12px!important;font-weight:800!important}
+
+.admin-new-calendar .calendar-days{grid-template-columns:repeat(7,calc(100% / 7))!important;column-gap:0!important;row-gap:10px!important}
+.admin-new-calendar .calendar-days button{box-sizing:border-box!important;width:100%!important;min-height:116px!important;padding:5px 2px 6px!important;gap:5px!important}
+.admin-new-calendar .calendar-days button>span{margin-bottom:2px!important}
+.admin-new-calendar .calendar-days button small{box-sizing:border-box!important;width:100%!important;min-height:27px!important;padding:6px 1px!important}
+
+.admin-new-calendar .calendar-days button.selected{background:transparent!important;color:inherit!important;border-color:#70a9cf!important;box-shadow:none!important;font-weight:800!important}
+.admin-new-calendar .calendar-days button.selected>span{font-weight:900!important;color:var(--deep)!important}
+
+.admin-new-calendar .calendar-days button{align-items:center!important;text-align:center!important;padding-left:0!important;padding-right:0!important}
+.admin-new-calendar .calendar-days button>span{display:block!important;width:100%!important;text-align:center!important}
+.admin-new-calendar .calendar-days button small{align-self:stretch!important;text-align:center!important;margin-left:0!important;margin-right:0!important}
+
+.admin-new-calendar .admin-day-heading{display:none!important}
+.admin-new-calendar .calendar-days button small{border:1px solid #c9dbe4!important;box-shadow:none!important}
+.admin-new-calendar .calendar-days button{border-bottom:1px solid #edf2f4!important}
+
+.admin-new-calendar .calendar-days button{height:auto!important;max-height:none!important;align-self:start!important;justify-content:flex-start!important;vertical-align:top!important}
+.admin-new-calendar .calendar-days button>span{margin-top:0!important;margin-bottom:2px!important;height:auto!important;min-height:18px!important}
+.admin-new-calendar .calendar-days button small:first-of-type{margin-top:0!important}
+
+.admin-new-calendar .calendar-days button{gap:0!important;padding-top:0!important}
+.admin-new-calendar .calendar-days button>span{margin-bottom:0!important;min-height:16px!important}
+
+.admin-new-calendar .admin-calendar-controls{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:8px!important;margin:0 -14px 14px!important;padding:12px 14px!important;background:var(--beige)!important;border-bottom:1px solid #eadfd2!important}
+.admin-new-calendar .admin-calendar-controls select{min-width:78px!important;padding:7px 8px!important;border:1px solid #d9cbbb!important;border-radius:5px!important;background:#fff!important;color:var(--deep)!important;font-size:13px!important;font-weight:800!important}
+
+.admin-new-calendar .admin-calendar-controls{justify-content:space-between!important;flex-wrap:nowrap!important}
+.admin-new-calendar .admin-calendar-controls>strong{color:var(--deep)!important;font-size:18px!important;white-space:nowrap!important}
+.admin-new-calendar .admin-calendar-selects{display:flex!important;align-items:center!important;gap:6px!important;white-space:nowrap!important}
+
+.admin-active .admin-calendar-menu-row{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;min-height:76px!important;padding:0 22px!important;background:var(--beige)!important}
+.admin-active .admin-calendar-menu-row .admin-section-trigger{width:auto!important;min-height:0!important;flex:1 1 auto!important;padding:20px 0!important;background:transparent!important}
+.admin-active .admin-calendar-menu-selects{display:flex!important;align-items:center!important;gap:6px!important;flex:0 0 auto!important}
+.admin-active .admin-calendar-menu-selects select{width:92px!important;min-width:92px!important;padding:9px 7px!important;border:1px solid #d9cbbb!important;border-radius:5px!important;background:#fff!important;color:var(--deep)!important;font-size:13px!important;font-weight:800!important}
+@media(max-width:760px){.admin-active .admin-calendar-menu-row{min-height:72px!important;padding:0 14px!important;gap:6px!important}.admin-active .admin-calendar-menu-row .admin-section-trigger{padding:18px 0!important}.admin-active .admin-calendar-menu-selects select{width:82px!important;min-width:82px!important;font-size:12px!important;padding:8px 5px!important}}
+
+.booking-form.admin-mode .selected-booking>.calendar-back,.booking-form.admin-mode .selected-booking>.selected-date-card{display:none!important}
+
+.admin-active .admin-calendar-menu-row{min-height:54px!important;padding:0 16px!important}
+.admin-active .admin-calendar-menu-row .admin-section-trigger{min-height:54px!important;padding:10px 0!important}
+.admin-active .admin-calendar-menu-selects select{padding:6px 6px!important}
+.admin-new-calendar .calendar-week{height:34px!important;align-items:center!important}
+.admin-new-calendar .calendar-week span{font-size:16px!important;font-weight:800!important;line-height:1.2!important;color:var(--deep)!important}
+@media(max-width:760px){.admin-active .admin-calendar-menu-row{min-height:52px!important;padding:0 12px!important}.admin-active .admin-calendar-menu-row .admin-section-trigger{min-height:52px!important;padding:8px 0!important}.admin-active .admin-calendar-menu-selects select{width:78px!important;min-width:78px!important;padding:6px 4px!important}.admin-new-calendar .calendar-week span{font-size:15px!important}}
+
+.admin-active .admin-container.calendar-open>.admin-section-card:first-child{display:none!important}
+
+.admin-new-calendar .calendar-week span:first-child{color:#c94b4b!important}
+.admin-new-calendar .calendar-week span:last-child{color:#3f78ad!important}
+
+.admin-new-calendar .calendar-days button.selected{background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:none!important;color:inherit!important}
+.admin-new-calendar .calendar-days button.selected>span{background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;color:var(--deep)!important;font-weight:900!important}
+.admin-new-calendar .calendar-days button{border-bottom:0!important}
+
+.admin-active .admin-container.calendar-open>.admin-section-card:last-child{display:none!important}
+
+/* 예약 상세 4개 상태 버튼: 취소는 별도 안전 액션으로 표시 */
+.admin-status-buttons{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:5px!important}
+.admin-status-buttons button{min-width:0!important;padding:9px 2px!important;font-size:10px!important;white-space:nowrap!important}
+.admin-status-buttons button:last-child{color:#b34b43!important;border-color:#e2c4c0!important;background:#fff8f7!important}
+.admin-status-buttons button:last-child.selected{color:#fff!important;border-color:#b34b43!important;background:#b34b43!important}
+@media(max-width:380px){.admin-status-buttons{gap:3px!important}.admin-status-buttons button{font-size:9px!important;padding-left:1px!important;padding-right:1px!important}}
+
+/* 예약취소 완료 후에는 빨간 강조를 해제하고 일반 선택 버튼 색상으로 표시 */
+.admin-status-buttons button:last-child.selected{color:#fff!important;border-color:var(--deep)!important;background:var(--deep)!important}
+
+/* 관리자 3개 메뉴 접힘 상태 공통 정렬 */
+.admin-active .admin-section-card>.admin-section-trigger,
+.admin-active .admin-calendar-menu-row{min-height:76px!important}
+.admin-active .admin-section-trigger{line-height:1!important}
+.admin-active .admin-section-trigger strong{display:block!important;line-height:1.25!important;margin:0!important;white-space:nowrap!important}
+.admin-active .admin-section-trigger>span{display:block!important;flex:0 0 22px!important;width:22px!important;text-align:center!important;line-height:1!important}
+.admin-active .admin-calendar-menu-row .admin-section-trigger{min-height:76px!important;padding-top:20px!important;padding-bottom:20px!important}
+@media(max-width:760px){.admin-active .admin-section-card>.admin-section-trigger,.admin-active .admin-calendar-menu-row{min-height:72px!important}.admin-active .admin-calendar-menu-row .admin-section-trigger{min-height:72px!important}}
+
+/* 관리자 메뉴 3개를 캘린더와 동일한 베이지색으로 통일 */
+.admin-active .admin-section-card>.admin-section-trigger,
+.admin-active .admin-calendar-menu-row,
+.admin-active .admin-calendar-menu-row .admin-section-trigger{background:var(--beige)!important;color:var(--deep)!important}
+.admin-active .admin-section-card>.admin-section-trigger{padding-left:22px!important;padding-right:22px!important}
+.admin-active .admin-calendar-menu-row{padding-left:22px!important;padding-right:22px!important}
+.admin-active .admin-calendar-menu-row .admin-section-trigger{padding-left:0!important;padding-right:0!important}
+.admin-active .admin-section-trigger strong{font-size:21px!important;font-weight:800!important;letter-spacing:0!important}
+@media(max-width:760px){
+  .admin-active .admin-section-trigger strong{font-size:20px!important}
+  .admin-active .admin-section-card>.admin-section-trigger{padding-left:14px!important;padding-right:14px!important}
+  .admin-active .admin-calendar-menu-row{padding-left:14px!important;padding-right:14px!important}
+}
+
+/* 관리자 메뉴 제목·화살표 기준선 고정 */
+.admin-active .admin-section-trigger{justify-content:flex-start!important;text-align:left!important}
+.admin-active .admin-section-trigger>strong{flex:1 1 auto!important;text-align:left!important}
+.admin-active .admin-section-trigger>span{margin-left:auto!important;align-self:center!important}
+.admin-active .admin-calendar-menu-row .admin-section-trigger{justify-content:flex-start!important}
+
+/* 예약조정은 날짜·시간 마감 관리용이므로 캘린더 화면을 항상 펼침 */
+.admin-adjust-card .admin-calendar-panel{display:block!important}
+.admin-adjust-card .admin-day-view{display:none!important}
+.admin-adjust-card .admin-month-return{display:none!important}
+
+/* 관리자 모드 고정 상태와 명시적 고객 화면 이동 버튼 */
+.admin-exit-button{width:100%;min-height:48px;border:1px solid var(--deep);border-radius:8px;background:var(--deep);color:#fff;padding:12px 16px;font-size:13px;font-weight:800;cursor:pointer;text-align:center}
+.admin-exit-button:active{transform:translateY(1px)}
+
+/* 새 관리자 세 메뉴 사용 시 원본의 이전 관리자 헤더·중복 고객 패널 숨김 */
+.admin-active .admin-only-header,
+.admin-active .admin-customers{display:none!important}
