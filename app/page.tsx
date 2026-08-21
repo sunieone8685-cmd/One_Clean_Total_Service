@@ -251,6 +251,7 @@ export default function Home() {
 
   return (
     <main>
+      {!adminMode && <>
       <header className="top-brand shell">
         <a href="#top" aria-label="홈으로"><span className="brand-one">One</span><span> Clean Total Service</span></a>
       </header>
@@ -297,8 +298,10 @@ export default function Home() {
 
         </div>
       </section>
+      </>}
 
-            <section className="booking section" id="booking"><div className="shell booking-grid">
+      {adminMode && <div className="admin-only-header shell"><strong>관리자 예약 관리</strong><button type="button" onClick={() => { setAdminMode(false); setSelectedDate(null); }}>고객 화면으로 돌아가기</button></div>}
+                    <section className="booking section" id="booking"><div className="shell booking-grid">
 
                     <form onSubmit={submit} noValidate className="booking-form">
                         <div className="booking-plan-stack"><p className="booking-frequency-note">한 달 2번이면 충분합니다. 다음 관리 전까지는 물만 뿌리세요.</p>
@@ -328,7 +331,7 @@ export default function Home() {
           </form>
         </div></section>
 
-      <footer><div className="shell footer-grid"><div><div className="business-title"><a className="footer-brand" href="#top"><span className="footer-one">원</span>클린 토탈 서비스</a><span className="business-number">(506-50-00503)</span></div><p>욕실 한 곳에 집중하는<br />부분청소 정기관리 서비스</p></div><div><span>CONTACT</span><a className="phone-link phone-button" href="tel:01041168685"><small className="phone-caption">클릭 연결</small><strong>010-4116-8685</strong></a></div><div><span>AREA</span><b>루원시티·청라 지역</b><button className="secret-admin-trigger" type="button" onClick={() => adminMode ? (setAdminMode(false), setSelectedDate(null)) : setAdminLoginOpen(true)}>[지역 외 서비스 불가]</button></div></div><div className="shell copyright"><span>© 원클린 토탈 서비스. ALL RIGHTS RESERVED.</span></div></footer>
+      {!adminMode && <footer><div className="shell footer-grid"><div><div className="business-title"><a className="footer-brand" href="#top"><span className="footer-one">원</span>클린 토탈 서비스</a><span className="business-number">(506-50-00503)</span></div><p>욕실 한 곳에 집중하는<br />부분청소 정기관리 서비스</p></div><div><span>CONTACT</span><a className="phone-link phone-button" href="tel:01041168685"><small className="phone-caption">클릭 연결</small><strong>010-4116-8685</strong></a></div><div><span>AREA</span><b>루원시티·청라 지역</b><button className="secret-admin-trigger" type="button" onClick={() => adminMode ? (setAdminMode(false), setSelectedDate(null)) : setAdminLoginOpen(true)}>[지역 외 서비스 불가]</button></div></div><div className="shell copyright"><span>© 원클린 토탈 서비스. ALL RIGHTS RESERVED.</span></div></footer>}
       {adminLoginOpen && <div className="admin-modal" role="dialog" aria-modal="true" aria-label="관리자 로그인"><form onSubmit={loginAdmin}><button type="button" className="modal-close" onClick={() => { setAdminLoginOpen(false); setAdminError(false); setAdminPassword(""); }}>×</button><strong>관리자 모드</strong><p>비밀번호를 입력해 주세요.</p><input autoFocus type="password" value={adminPassword} onChange={e => { setAdminPassword(e.target.value); setAdminError(false); }} placeholder="비밀번호" />{adminError && <small>비밀번호가 올바르지 않습니다.</small>}<button type="submit">관리자 모드 시작</button></form></div>}
     </main>
   );
