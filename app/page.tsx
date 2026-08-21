@@ -315,7 +315,7 @@ export default function Home() {
                 <div className="address-field">
                   <span>방문 주소</span>
                   <div className="address-search-row">
-                    <input required readOnly value={addressBase} aria-label="상위 주소" placeholder="인천시 연수구, 도로명 주소 검색" />
+                    <input required readOnly value={addressBase} aria-label="상위 주소" placeholder="" />
                     <button type="button" className="address-search-button" onClick={openAddressSearch}>주소 검색</button>
                   </div>
                   <input required value={addressDetail} onChange={event => { setAddressDetail(event.currentTarget.value); setBookingErrors(current => ({ ...current, address: "" })); }} aria-label="상세주소" placeholder="상세주소 (동·호수 포함)" />
