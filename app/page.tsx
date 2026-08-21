@@ -2,6 +2,14 @@
 
 import { FormEvent, useEffect, useState } from "react";
 
+declare global {
+  interface Window {
+    daum?: {
+      Postcode: new (options: { oncomplete: (data: { roadAddress: string; jibunAddress: string; address: string }) => void }) => { open: () => void };
+    };
+  }
+}
+
 const services = [
   { no: "01", name: "욕실 청소", en: "BATHROOM", time: "약 2시간", price: "가격 미정", desc: "샤워 시 샴푸나 비누 거품에 피지와 단백질 오염이 섞여 쌓입니다. 이런 오염이 방치되면 꿉꿉한 냄새를 유발합니다.\n습하다고 곰팡이가 생기는 것이 아니라, 이런 오염 방치가 원인이 됩니다.", tags: ["욕실 천장 및 벽면 전체", "욕조", "샤워부스", "수전", "세면대 및 거울", "수납장", "변기", "하수구 및 덮개, 트랩"] },
   { no: "02", name: "주방 청소", en: "KITCHEN", time: "약 2–3시간", price: "가격 미정", desc: "주방에는 눈에 잘 보이지 않는 기름때가 공간 전체에 넓게 쌓입니다. 친환경 약품으로 오염 제거 후, 고화력 스팀청소기로 주방 전체를 멸균·소독 처리합니다.\n깨끗하고 위생적인 주방을 만들어 드리겠습니다.", tags: ["후드및 필터", "가스레인지, 인덕션", "싱크대", "주방 조리 상판", "상·하부장 겉면", "수전", "아일랜드 식탁"] },
@@ -32,8 +40,8 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<number | null>(null);
   const [selectedTimeValue, setSelectedTimeValue] = useState("");
-  const [addressDong, setAddressDong] = useState("");
-  const [addressHo, setAddressHo] = useState("");
+  const [addressBase, setAddressBase] = useState("");
+  const [addressDetail, setAddressDetail] = useState("");
   const [adminLoginOpen, setAdminLoginOpen] = useState(false);
   const [adminPassword, setAdminPassword] = useState("");
   const [adminError, setAdminError] = useState(false);
@@ -110,7 +118,7 @@ export default function Home() {
   async function refreshAdminBookings() {
     if (!selectedDateKey || !adminMode) return;
     const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_bookings_for_date`, {
-      method: "POST", headers: supabaseHeaders, body: JSON.stringify({ p_date: selectedDateKey, p_password: "0486" }),
+      method: "POST", headers: supabaseHeaders, body: JSON.stringify({ p_date: selectedDateKey, p_password: "8685" }),
     });
     if (response.ok) setAdminBookings(await response.json());
   }
@@ -119,7 +127,7 @@ export default function Home() {
 
   async function completeBooking(id: number) {
     const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_complete_booking`, {
-      method: "POST", headers: supabaseHeaders, body: JSON.stringify({ p_booking_id: id, p_password: "0486" }),
+      method: "POST", headers: supabaseHeaders, body: JSON.stringify({ p_booking_id: id, p_password: "8685" }),
     });
     if (!response.ok || !(await response.json())) {
       window.alert("서비스 완료 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.");
@@ -134,7 +142,7 @@ export default function Home() {
     const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_set_slot`, {
       method: "POST",
       headers: supabaseHeaders,
-      body: JSON.stringify({ p_date: selectedDateKey, p_time: time, p_closed: !current.includes(time), p_password: "0486" }),
+      body: JSON.stringify({ p_date: selectedDateKey, p_time: time, p_closed: !current.includes(time), p_password: "8685" }),
     });
     if (!response.ok) {
       window.alert("예약 마감 변경에 실패했습니다. 잠시 후 다시 시도해 주세요.");
@@ -145,9 +153,24 @@ export default function Home() {
 
   function loginAdmin(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (adminPassword === "0486") {
+    if (adminPassword === "8685") {
       setAdminMode(true); setAdminLoginOpen(false); setAdminPassword(""); setAdminError(false); setSelectedDate(null);
     } else setAdminError(true);
+  }
+
+  function openAddressSearch() {
+    const open = () => {
+      if (!window.daum?.Postcode) return;
+      new window.daum.Postcode({ oncomplete: data => setAddressBase(data.roadAddress || data.jibunAddress || data.address) }).open();
+    };
+    if (window.daum?.Postcode) {
+      open();
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
+    script.onload = open;
+    document.body.appendChild(script);
   }
 
   async function submit(e: FormEvent<HTMLFormElement>) {
@@ -158,13 +181,13 @@ export default function Home() {
     const name = data.get("booking-name")?.toString().trim() ?? "";
     const phone = data.get("booking-phone")?.toString().trim() ?? "";
     const service = data.get("booking-service")?.toString().trim() ?? "";
-    const address = `${addressDong.trim()} ${addressHo.trim()}`.trim();
+    const address = `${addressBase.trim()} ${addressDetail.trim()}`.trim();
     const errors: Record<string, string> = {};
     if (!selectedDateKey || !selectedTime) errors.datetime = "날짜·시간을 입력해 주세요.";
     if (!name) errors.name = "이름을 입력해 주세요.";
     if (!phone) errors.phone = "연락처를 입력해 주세요.";
     if (!service) errors.service = "원하는 서비스를 입력해 주세요.";
-    if (!addressDong || !addressHo.trim()) errors.address = "동·호수를 입력해 주세요.";
+    if (!addressBase.trim() || !addressDetail.trim()) errors.address = "주소 검색 후 상세주소를 입력해 주세요.";
     setBookingErrors(errors);
     if (Object.keys(errors).length) return;
     if (selectedDateKey && selectedTime) {
@@ -187,8 +210,8 @@ export default function Home() {
       setReviewToken(token);
       setCanWriteReview(false);
       form.reset();
-      setAddressDong("");
-      setAddressHo("");
+      setAddressBase("");
+      setAddressDetail("");
       fetch(`${SUPABASE_URL}/functions/v1/send-booking-sms`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -263,7 +286,7 @@ export default function Home() {
           <p>안녕하세요.<br />귀댁에 방문 서비스를 제공할 홈크린마스터입니다.</p>
           <p>저는 2015년부터 2019년까지 밀레니엄 힐튼 서울 객실관리부에서 룸메이드로 근무하며 프리미엄 청결 서비스를 경험했고, 이후 월 단위 욕실 정기 구독 서비스 업체 호텔리브에서는 인천 지역 매니저로 팀 관리와 교육을 담당했습니다.</p>
           <p>현재는 에어컨 세척 업체를 직접 운영하며 실전 노하우를 쌓고 있습니다. 이러한 경험을 바탕으로, 이제 인천 청라 지역에 특화된 주방·욕실 정기 관리 서비스를 새롭게 시작합니다.</p>
-          <p className="greeting-principle">믿고 맡길 수 있는 청소 파트너, 홈크린마스터가 깨끗하고 위생적인 공간을 정기적으로 책임지겠습니다.</p>
+          <p className="greeting-principle">믿고 맡길 수 있는 청소 파트너, 홈크린마스터로 깨끗하고 위생적인 공간을 책임지겠습니다.</p>
 
         </div>
       </section>
@@ -291,10 +314,11 @@ export default function Home() {
                 {selectedPlan && selectedDate && selectedTimeValue && <div className="contact-step"><div className="contact-step-head"><small>STEP 3 · CONTACT</small><h3>연락 가능한 정보를 알려 주세요.</h3></div><input type="hidden" name="booking-service" value={selectedPlanService} /><div className="form-row"><label>이름<input name="booking-name" placeholder="성함을 입력해 주세요" onChange={() => setBookingErrors(current => ({ ...current, name: "" }))} />{bookingErrors.name && <small className="field-error">{bookingErrors.name}</small>}</label><label>연락처<input name="booking-phone" inputMode="tel" maxLength={19} placeholder="010 - 0000 - 0000" onChange={event => { const digits = event.currentTarget.value.replace(/\D/g, "").slice(0, 11); event.currentTarget.value = digits.length <= 3 ? digits : digits.length <= 7 ? `${digits.slice(0, 3)} - ${digits.slice(3)}` : `${digits.slice(0, 3)} - ${digits.slice(3, 7)} - ${digits.slice(7)}`; setBookingErrors(current => ({ ...current, phone: "" })); }} />{bookingErrors.phone && <small className="field-error">{bookingErrors.phone}</small>}</label></div>
                 <div className="address-field">
                   <span>방문 주소</span>
-                  <div className="address-dong-ho">
-                    <input required value={addressDong} onChange={event => { setAddressDong(event.currentTarget.value); setBookingErrors(current => ({ ...current, address: "" })); }} aria-label="동" placeholder="동 (예: 101동)" />
-                    <input required value={addressHo} onChange={event => { setAddressHo(event.currentTarget.value); setBookingErrors(current => ({ ...current, address: "" })); }} aria-label="호수" placeholder="호수 (예: 1204호)" />
+                  <div className="address-search-row">
+                    <input required readOnly value={addressBase} aria-label="상위 주소" placeholder="인천시 연수구, 도로명 주소 검색" />
+                    <button type="button" className="address-search-button" onClick={openAddressSearch}>주소 검색</button>
                   </div>
+                  <input required value={addressDetail} onChange={event => { setAddressDetail(event.currentTarget.value); setBookingErrors(current => ({ ...current, address: "" })); }} aria-label="상세주소" placeholder="상세주소 (동·호수 포함)" />
                   {bookingErrors.address && <small className="field-error">{bookingErrors.address}</small>}
                 </div>
                 <button className="submit" type="submit">{sent ? "예약이 접수되었습니다 ✓" : "예약 신청"}</button><p className="booking-confirm-note">빠른 시간 내에 확인 전화드리겠습니다.</p>
