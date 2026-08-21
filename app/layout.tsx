@@ -18,8 +18,8 @@ export async function generateMetadata(): Promise<Metadata> {
  const image = `${protocol}://${host}/og.png`;
  return {
  title: "욕실 부분청소 | One Clean Total Service",
- description: "욕실 한 곳에 집중하는 인천·청라 지역 부분청소 서비스.",
- openGraph: { title: "One Clean Total Service", description: "욕실 한 곳에 집중하는 인천·청라 지역 부분청소 서비스.", images: [image], locale: "ko_KR", type: "website" },
+ description: "욕실 한 곳에 집중하는 루원시티·청라 지역 부분청소 서비스.",
+ openGraph: { title: "One Clean Total Service", description: "욕실 한 곳에 집중하는 루원시티·청라 지역 부분청소 서비스.", images: [image], locale: "ko_KR", type: "website" },
  twitter: { card: "summary_large_image", images: [image] },
  };
 }

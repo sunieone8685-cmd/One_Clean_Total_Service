@@ -285,7 +285,7 @@ export default function Home() {
           <p className="greeting-kicker">HOME CLEAN MASTER’S STORY</p>
           <p>안녕하세요.<br />귀댁에 방문 서비스를 제공할 홈크린마스터입니다.</p>
           <p>저는 2015년부터 2019년까지 밀레니엄 힐튼 서울 객실관리부에서 룸메이드로 근무하며 프리미엄 청결 서비스를 경험했고, 이후 월 단위 욕실 정기 구독 서비스 업체 호텔리브에서는 인천 지역 매니저로 팀 관리와 교육을 담당했습니다.</p>
-          <p>현재는 에어컨 세척 업체를 직접 운영하며 실전 노하우를 쌓고 있습니다. 이러한 경험을 바탕으로, 이제 인천 청라 지역에 특화된 주방·욕실 정기 관리 서비스를 새롭게 시작합니다.</p>
+          <p>현재는 에어컨 세척 업체를 직접 운영하며 실전 노하우를 쌓고 있습니다. 이러한 경험을 바탕으로, 이제 루원시티·청라 지역에 특화된 주방·욕실 정기 관리 서비스를 새롭게 시작합니다.</p>
           <p className="greeting-principle">믿고 맡길 수 있는 청소 파트너, 홈크린마스터로 깨끗하고 위생적인 공간을 책임지겠습니다.</p>
 
         </div>
@@ -328,7 +328,7 @@ export default function Home() {
           </form>
         </div></section>
 
-      <footer><div className="shell footer-grid"><div><div className="business-title"><a className="footer-brand" href="#top"><span className="footer-one">원</span>클린 토탈 서비스</a><span className="business-number">(506-50-00503)</span></div><p>욕실 한 곳에 집중하는<br />부분청소 정기관리 서비스</p></div><div><span>CONTACT</span><a className="phone-link phone-button" href="tel:01041168685"><small className="phone-caption">클릭 연결</small><strong>010-4116-8685</strong></a></div><div><span>AREA</span><b>인천·청라 지역</b><button className="secret-admin-trigger" type="button" onClick={() => adminMode ? (setAdminMode(false), setSelectedDate(null)) : setAdminLoginOpen(true)}>[지역 외 서비스 불가]</button></div></div><div className="shell copyright"><span>© 원클린 토탈 서비스. ALL RIGHTS RESERVED.</span></div></footer>
+      <footer><div className="shell footer-grid"><div><div className="business-title"><a className="footer-brand" href="#top"><span className="footer-one">원</span>클린 토탈 서비스</a><span className="business-number">(506-50-00503)</span></div><p>욕실 한 곳에 집중하는<br />부분청소 정기관리 서비스</p></div><div><span>CONTACT</span><a className="phone-link phone-button" href="tel:01041168685"><small className="phone-caption">클릭 연결</small><strong>010-4116-8685</strong></a></div><div><span>AREA</span><b>루원시티·청라 지역</b><button className="secret-admin-trigger" type="button" onClick={() => adminMode ? (setAdminMode(false), setSelectedDate(null)) : setAdminLoginOpen(true)}>[지역 외 서비스 불가]</button></div></div><div className="shell copyright"><span>© 원클린 토탈 서비스. ALL RIGHTS RESERVED.</span></div></footer>
       {adminLoginOpen && <div className="admin-modal" role="dialog" aria-modal="true" aria-label="관리자 로그인"><form onSubmit={loginAdmin}><button type="button" className="modal-close" onClick={() => { setAdminLoginOpen(false); setAdminError(false); setAdminPassword(""); }}>×</button><strong>관리자 모드</strong><p>비밀번호를 입력해 주세요.</p><input autoFocus type="password" value={adminPassword} onChange={e => { setAdminPassword(e.target.value); setAdminError(false); }} placeholder="비밀번호" />{adminError && <small>비밀번호가 올바르지 않습니다.</small>}<button type="submit">관리자 모드 시작</button></form></div>}
     </main>
   );
