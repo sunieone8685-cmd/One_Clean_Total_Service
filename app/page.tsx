@@ -158,7 +158,7 @@ export default function Home() {
     const name = data.get("booking-name")?.toString().trim() ?? "";
     const phone = data.get("booking-phone")?.toString().trim() ?? "";
     const service = data.get("booking-service")?.toString().trim() ?? "";
-    const address = `${addressDong} ${addressHo.trim()}`.trim();
+    const address = `${addressDong.trim()} ${addressHo.trim()}`.trim();
     const errors: Record<string, string> = {};
     if (!selectedDateKey || !selectedTime) errors.datetime = "날짜·시간을 입력해 주세요.";
     if (!name) errors.name = "이름을 입력해 주세요.";
@@ -171,7 +171,7 @@ export default function Home() {
       const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/reserve_booking`, {
         method: "POST",
         headers: supabaseHeaders,
-        body: JSON.stringify({ p_date: selectedDateKey, p_time: selectedTime, p_name: name, p_phone: phone, p_service: service, p_address: `인천·청라 지역 ${address}` }),
+        body: JSON.stringify({ p_date: selectedDateKey, p_time: selectedTime, p_name: name, p_phone: phone, p_service: service, p_address: address }),
       });
       if (!response.ok) {
         window.alert("예약 접수에 실패했습니다. 잠시 후 다시 시도해 주세요.");
@@ -291,12 +291,8 @@ export default function Home() {
                 {selectedPlan && selectedDate && selectedTimeValue && <div className="contact-step"><div className="contact-step-head"><small>STEP 3 · CONTACT</small><h3>연락 가능한 정보를 알려 주세요.</h3></div><input type="hidden" name="booking-service" value={selectedPlanService} /><div className="form-row"><label>이름<input name="booking-name" placeholder="성함을 입력해 주세요" onChange={() => setBookingErrors(current => ({ ...current, name: "" }))} />{bookingErrors.name && <small className="field-error">{bookingErrors.name}</small>}</label><label>연락처<input name="booking-phone" inputMode="tel" maxLength={19} placeholder="010 - 0000 - 0000" onChange={event => { const digits = event.currentTarget.value.replace(/\D/g, "").slice(0, 11); event.currentTarget.value = digits.length <= 3 ? digits : digits.length <= 7 ? `${digits.slice(0, 3)} - ${digits.slice(3)}` : `${digits.slice(0, 3)} - ${digits.slice(3, 7)} - ${digits.slice(7)}`; setBookingErrors(current => ({ ...current, phone: "" })); }} />{bookingErrors.phone && <small className="field-error">{bookingErrors.phone}</small>}</label></div>
                 <div className="address-field">
                   <span>방문 주소</span>
-                  <div className="address-fixed">인천·청라 지역</div>
                   <div className="address-dong-ho">
-                    <select required value={addressDong} onChange={event => { setAddressDong(event.currentTarget.value); setBookingErrors(current => ({ ...current, address: "" })); }} aria-label="동">
-                      <option value="">동 선택</option>
-                      {Array.from({ length: 13 }, (_, i) => `${521 + i}동`).map(dong => <option key={dong} value={dong}>{dong}</option>)}
-                    </select>
+                    <input required value={addressDong} onChange={event => { setAddressDong(event.currentTarget.value); setBookingErrors(current => ({ ...current, address: "" })); }} aria-label="동" placeholder="동 (예: 101동)" />
                     <input required value={addressHo} onChange={event => { setAddressHo(event.currentTarget.value); setBookingErrors(current => ({ ...current, address: "" })); }} aria-label="호수" placeholder="호수 (예: 1204호)" />
                   </div>
                   {bookingErrors.address && <small className="field-error">{bookingErrors.address}</small>}
@@ -308,7 +304,7 @@ export default function Home() {
           </form>
         </div></section>
 
-      <footer><div className="shell footer-grid"><div><div className="business-title"><a className="footer-brand" href="#top">원클린 토탈 서비스</a></div><p>욕실 한 곳에 집중하는<br />부분청소 정기관리 서비스</p></div><div><span>CONTACT</span><a className="phone-link phone-button" href="tel:01041168685"><small className="phone-caption">클릭 연결</small><strong>010-4116-8685</strong></a></div><div><span>AREA</span><b>인천·청라 지역</b><button className="secret-admin-trigger" type="button" onClick={() => adminMode ? (setAdminMode(false), setSelectedDate(null)) : setAdminLoginOpen(true)}>[지역 외 서비스 불가]</button></div></div><div className="shell copyright"><span>© 원클린 토탈 서비스. ALL RIGHTS RESERVED.</span></div></footer>
+      <footer><div className="shell footer-grid"><div><div className="business-title"><a className="footer-brand" href="#top"><span className="footer-one">원</span>클린 토탈 서비스</a><span className="business-number">(506-50-00503)</span></div><p>욕실 한 곳에 집중하는<br />부분청소 정기관리 서비스</p></div><div><span>CONTACT</span><a className="phone-link phone-button" href="tel:01041168685"><small className="phone-caption">클릭 연결</small><strong>010-4116-8685</strong></a></div><div><span>AREA</span><b>인천·청라 지역</b><button className="secret-admin-trigger" type="button" onClick={() => adminMode ? (setAdminMode(false), setSelectedDate(null)) : setAdminLoginOpen(true)}>[지역 외 서비스 불가]</button></div></div><div className="shell copyright"><span>© 원클린 토탈 서비스. ALL RIGHTS RESERVED.</span></div></footer>
       {adminLoginOpen && <div className="admin-modal" role="dialog" aria-modal="true" aria-label="관리자 로그인"><form onSubmit={loginAdmin}><button type="button" className="modal-close" onClick={() => { setAdminLoginOpen(false); setAdminError(false); setAdminPassword(""); }}>×</button><strong>관리자 모드</strong><p>비밀번호를 입력해 주세요.</p><input autoFocus type="password" value={adminPassword} onChange={e => { setAdminPassword(e.target.value); setAdminError(false); }} placeholder="비밀번호" />{adminError && <small>비밀번호가 올바르지 않습니다.</small>}<button type="submit">관리자 모드 시작</button></form></div>}
     </main>
   );
